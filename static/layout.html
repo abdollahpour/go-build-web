@@ -1,0 +1,42 @@
+{{define "layout"}}
+<!DOCTYPE html>
+<html lang='{{or .language ""}}' class="no-js">
+	<head>
+	<meta charset="utf-8">
+	<meta charset="utf-8">
+	<meta http-equiv="content-language" content="fa">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+	{{if .author}}
+		<meta name="author" content="{{.author}}">
+	{{end}}
+	<meta property="og:type" content="website" />
+	{{if .Image}}
+		<meta property="og:image" content="{{.image}}">
+	{{end}}
+	{{if .URL}}
+		<meta property="og:url" content="{{.url}}">
+	{{end}}
+	{{if .title}}
+		<meta property="og:title" content="{{.title}}">
+		<title>{{.title}}</title>
+	{{else}}
+		<title>Your website's title</title>
+	{{end}}
+	{{if .description}}
+		<meta property="og:description" content="{{.description}}">
+		<meta name="description" content="{{.description}}">
+	{{end}}
+	<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <div class="container">
+        {{template "content" .}}
+    </div>
+    <script src="/js/main.js"></script>
+</body>
+</html>
+{{end}}
+
+{{define "content"}}
+{{end}}

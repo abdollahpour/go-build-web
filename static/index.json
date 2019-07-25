@@ -1,0 +1,8 @@
+{
+    "language": "en",
+    "description": "Simple micro CMS using Go, Markdown and HTTP2",
+    "keywords": ["CMS", "Golang", "HTTP2", "Markdown"],
+    "author": "Hamed Abdollahpour",
+    "image": "/img/logo.png",
+    "title": "Go-micro-cms: Build easier and faster"
+}

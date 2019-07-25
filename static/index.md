@@ -1,4 +1,4 @@
-![go-build-web logo](/static/img/logo.png)
+![go-build-web logo](/img/logo.png)
 
 go-build-web
 ======
