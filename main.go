@@ -124,7 +124,7 @@ func build(html string, w io.Writer, httpWriter http.ResponseWriter) error {
 	var data map[string]interface{}
 	metaFile, err := ioutil.ReadFile(meta)
 
-	if os.IsNotExist(err) {
+	if err == nil {
 		err = json.Unmarshal([]byte(metaFile), &data)
 		if err != nil {
 			return fmt.Errorf("Error to parse the JSON meta data file: %s", meta)
