@@ -12,13 +12,12 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"gitlab.com/golang-commonmark/markdown"
+	"gopkg.in/russross/blackfriday.v2"
 )
 
 // Convert markown text to HTML
 func markdownFunc(t string) template.HTML {
-	md := markdown.New(markdown.XHTMLOutput(true))
-	html := md.RenderToString([]byte(t))
+	html := blackfriday.Run([]byte(t))
 	return template.HTML(html)
 }
 
@@ -37,8 +36,7 @@ func markdownFileFunc(path string) template.HTML {
 		return template.HTML("")
 	}
 
-	md := markdown.New(markdown.XHTMLOutput(true))
-	html := md.RenderToString(bytes)
+	html := blackfriday.Run(bytes)
 	return template.HTML(html)
 }
 
