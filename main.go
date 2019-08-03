@@ -23,16 +23,16 @@ func markdownFunc(t string) template.HTML {
 
 // Convert markdown file to HTML
 func markdownFileFunc(path string) template.HTML {
-	file, err := os.Open("./" + path)
+	file, err := os.Open("static" + path)
 	if err != nil {
-		os.Stderr.WriteString("Error to access markdown file: " + path)
+		os.Stderr.WriteString("Error to access markdown file: " + path + "\n")
 		return template.HTML("")
 	}
 	defer file.Close()
 
 	bytes, err := ioutil.ReadAll(file)
 	if err != nil {
-		os.Stderr.WriteString("Error to read the markdown file")
+		os.Stderr.WriteString("Error to read the markdown file\n")
 		return template.HTML("")
 	}
 
@@ -114,29 +114,21 @@ func buildAll(source string, destination string) error {
 
 func build(html string, w io.Writer, httpWriter http.ResponseWriter) error {
 	// TODO: How about if the file named *.JSON?
-	path := html[:len(html)-5]
-
-	meta := path + ".json"
-	_, err := os.Stat(html)
+	// Remove static from begin
+	path := filepath.Dir(html[6:]) + "/"
+	jsonFile := html[:len(html)-5] + ".json"
 
 	var data map[string]interface{}
-	metaFile, err := ioutil.ReadFile(meta)
+	jsonData, err := ioutil.ReadFile(jsonFile)
 
 	if err == nil {
-		err = json.Unmarshal([]byte(metaFile), &data)
+		err = json.Unmarshal([]byte(jsonData), &data)
 		if err != nil {
-			return fmt.Errorf("Error to parse the JSON meta data file: %s", meta)
+			return fmt.Errorf("Error to parse the JSON meta data file: %s", jsonFile)
 		}
 	}
 
-	// We provide some extra functionality in our templates files to help generate HTML files easier (ex using Markdown)
-	funcMap := template.FuncMap{"StringsJoin": strings.Join, "Markdown": markdownFunc, "MarkdownFile": func(arg string) template.HTML {
-		dir := filepath.Dir(path)
-		return markdownFileFunc(dir + "/" + arg)
-	}}
-
-	templates := []string{"static/layout.html", path + ".html"}
-	tmpl := template.Must(template.New("base").Funcs(funcMap).ParseFiles(templates...))
+	tmpl := template.Must(template.New("base").Funcs(funcMap(path)).ParseFiles(templates(html)...))
 	err = tmpl.ExecuteTemplate(w, "layout", data)
 	if err != nil {
 		return fmt.Errorf("Error to build the template: %s", html)
@@ -144,6 +136,44 @@ func build(html string, w io.Writer, httpWriter http.ResponseWriter) error {
 	fmt.Printf("Template compiled: %s\n", html)
 
 	return nil
+}
+
+// We provide some extra functionality in our templates files to help generate HTML files easier (ex using Markdown)
+func funcMap(path string) map[string]interface{} {
+	fmt.Println(path)
+	return template.FuncMap{
+		"StringsJoin": strings.Join,
+		"Markdown":    markdownFunc,
+		"PathStarts": func(arg string) string {
+			if strings.HasPrefix(path, arg) {
+				return arg
+			}
+			return ""
+		},
+		"PathEquals": func(arg string) string {
+			if path == arg {
+				return arg
+			}
+			return ""
+		},
+		"MarkdownFile": func(arg string) template.HTML {
+			return markdownFileFunc(path + arg)
+		},
+	}
+}
+
+func templates(html string) []string {
+	var layouts []string
+	layouts = append(layouts, html)
+	for html != "static" {
+		html = filepath.Dir(html)
+		layout := html + "/layout.html"
+		if _, err := os.Stat(layout); !os.IsNotExist(err) {
+			layouts = append(layouts, layout)
+		}
+
+	}
+	return layouts
 }
 
 func main() {
@@ -169,9 +199,9 @@ func main() {
 
 	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		path := req.URL.Path
-		path = "static" + path + "index"
-		html := path + ".html"
-		meta := path + ".json"
+		index := "static" + path + "index"
+		html := index + ".html"
+		meta := index + ".json"
 
 		// Load the json file using default params
 		var data map[string]interface{}
@@ -180,12 +210,6 @@ func main() {
 			_ = json.Unmarshal([]byte(file), &data)
 		}
 
-		// We provide some extra functionality in our templates files to help generate HTML files easier (ex using Markdown)
-		funcMap := template.FuncMap{"StringsJoin": strings.Join, "Markdown": markdownFunc, "MarkdownFile": func(arg string) template.HTML {
-			dir := filepath.Dir(path)
-			return markdownFileFunc(dir + "/" + arg)
-		}}
-
 		// TODO: We disable the Links for now. The idea is for static generate version, we monitor loaded resource and generate links
 		// for _, preload := range data.Preloads {
 		//	_as := preloads[filepath.Ext(preload)]
@@ -193,8 +217,7 @@ func main() {
 		//		w.Header().Add("Link", "<"+preload+">; as="+_as+"; rel=preload")
 		//	}
 		//}
-		templates := []string{"static/layout.html", html}
-		tmpl := template.Must(template.New("base").Funcs(funcMap).ParseFiles(templates...))
+		tmpl := template.Must(template.New("base").Funcs(funcMap(path)).ParseFiles(templates(html)...))
 		tmpl.ExecuteTemplate(w, "layout", data)
 	}).MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
 		if strings.HasSuffix(r.URL.Path, "/") {
