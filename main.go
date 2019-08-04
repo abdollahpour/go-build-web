@@ -140,7 +140,6 @@ func build(html string, w io.Writer, httpWriter http.ResponseWriter) error {
 
 // We provide some extra functionality in our templates files to help generate HTML files easier (ex using Markdown)
 func funcMap(path string) map[string]interface{} {
-	fmt.Println(path)
 	return template.FuncMap{
 		"StringsJoin": strings.Join,
 		"Markdown":    markdownFunc,
@@ -201,13 +200,15 @@ func main() {
 		path := req.URL.Path
 		index := "static" + path + "index"
 		html := index + ".html"
-		meta := index + ".json"
+		jsonFile := index + ".json"
 
 		// Load the json file using default params
 		var data map[string]interface{}
-		file, err := ioutil.ReadFile(meta)
+		jsonData, err := ioutil.ReadFile(jsonFile)
 		if err == nil {
-			_ = json.Unmarshal([]byte(file), &data)
+			if json.Unmarshal(jsonData, &data) != nil {
+				fmt.Println("Error to load JSON: " + jsonFile)
+			}
 		}
 
 		// TODO: We disable the Links for now. The idea is for static generate version, we monitor loaded resource and generate links
