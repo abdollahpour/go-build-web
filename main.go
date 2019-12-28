@@ -23,7 +23,13 @@ func markdownFunc(t string) template.HTML {
 
 // Convert markdown file to HTML
 func markdownFileFunc(path string) template.HTML {
-	file, err := os.Open("static" + path)
+	absPath, err := filepath.Abs(path)
+	var file *os.File
+	if absPath == path {
+		file, err = os.Open(absPath)
+	} else {
+		file, err = os.Open(filepath.Join("static", path))
+	}
 	if err != nil {
 		os.Stderr.WriteString("Error to access markdown file: " + path + "\n")
 		return template.HTML("")
